@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Thống Kê Doanh Thu - Spa Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/styles.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+</head>
+
+<body>
+    <!-- Header -->
+    <div id="header"></div>
+
+    <!-- Main Content -->
+    <main class="container">
+        <!-- Page Header -->
+        <div class="row between" style="margin-bottom: 20px;">
+            <h1 class="page-title">
+                <i class="fas fa-chart-line" style="color: var(--color-success); margin-right: 8px;"></i>
+                Thống Kê Doanh Thu
+            </h1>
+        </div>
+
+        <!-- Daily Sales Chart -->
+        <section class="card" style="margin-bottom: 20px;">
+            <h2 style="margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                <i class="fas fa-calendar-week" style="color: var(--color-primary-500);"></i>
+                Doanh thu theo ngày (7 ngày gần nhất)
+            </h2>
+            <div id="sales-chart-large" class="chart large">
+                <div style="width: 100%; text-align: center; padding: 40px 0;">
+                    <i class="fas fa-spinner fa-spin" style="font-size: 24px; color: var(--color-primary-500);"></i>
+                    <p style="margin-top: 10px; color: var(--color-gray-500);">Đang tải dữ liệu...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Monthly Sales -->
+        <section class="card">
+            <h2 style="margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                <i class="fas fa-calendar-alt" style="color: var(--color-secondary-500);"></i>
+                Doanh thu theo tháng
+            </h2>
+            <div id="sales-monthly" class="grid grid-4">
+                <div style="text-align: center; padding: 20px; background: var(--color-gray-50); border-radius: var(--border-radius);">
+                    <i class="fas fa-spinner fa-spin" style="font-size: 24px; color: var(--color-primary-500);"></i>
+                    <p style="margin-top: 10px;">Đang tải...</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <div id="footer"></div>
+
+    <!-- Scripts -->
+    <script src="assets/js/app.js"></script>
+    <script src="assets/js/sales.js"></script>
+    <script>
+        // Load header
+        function loadHeader() {
+            fetch('layouts/header.html')
+                .then(r => r.text())
+                .then(html => {
+                    document.getElementById('header').innerHTML = html;
+                });
+        }
+
+        loadHeader();
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function () {
+            renderSalesChart('#sales-chart-large', true);
+            renderSalesMonthly();
+        });
+    </script>
+</body>
+
+</html>

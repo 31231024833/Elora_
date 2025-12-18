@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quản Lý Danh Mục - Spa Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/styles.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+</head>
+
+<body>
+    <!-- Header -->
+    <div id="header"></div>
+
+    <!-- Main Content -->
+    <main class="container">
+        <!-- Page Header -->
+        <div class="row between" style="margin-bottom: 20px;">
+            <h1 class="page-title">Quản Lý Danh Mục</h1>
+            <button class="btn primary" onclick="openCategoryForm()">
+                <i class="fas fa-plus"></i> Thêm Danh Mục
+            </button>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="card" style="margin-bottom: 20px;">
+            <input type="text" id="cat-search" placeholder="Tìm kiếm danh mục..." 
+                style="width: 100%; margin: 0;" onkeyup="handleSearch()" />
+        </div>
+
+        <!-- Categories Table -->
+        <div class="card">
+            <table class="table" id="cat-table">
+                <thead>
+                    <tr>
+                        <th style="width: 80px;">Icon</th>
+                        <th>Tên Danh Mục</th>
+                        <th>Mô Tả</th>
+                        <th style="width: 100px;">Thứ Tự</th>
+                        <th style="width: 200px;">Hành Động</th>
+                    </tr>
+                </thead>
+                <tbody id="cat-tbody">
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 40px;">
+                            <i class="fas fa-spinner fa-spin" style="font-size: 24px;"></i>
+                            <p style="margin-top: 10px;">Đang tải dữ liệu...</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- Modal Thêm/Sửa Danh Mục -->
+    <div class="modal hidden" id="modal-cat">
+        <div class="modal-content">
+            <div class="row between">
+                <h2 id="modal-cat-title">Thêm Danh Mục Mới</h2>
+                <button class="btn" onclick="closeCategoryForm()" style="width: auto;">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <form id="cat-form" onsubmit="handleSubmit(event)">
+                <input type="hidden" id="cat-id" />
+
+                <div>
+                    <label>Tên Danh Mục <span style="color: red;">*</span></label>
+                    <input type="text" id="cat-name" required />
+                </div>
+
+                <div style="margin-top: 16px;">
+                    <label>Mô Tả</label>
+                    <textarea id="cat-description" rows="3"></textarea>
+                </div>
+
+                <div class="form-row" style="margin-top: 16px;">
+                    <div>
+                        <label>Icon (Font Awesome class)</label>
+                        <input type="text" id="cat-icon" placeholder="fas fa-spa" />
+                    </div>
+                    <div>
+                        <label>Thứ Tự</label>
+                        <input type="number" id="cat-sort" value="0" min="0" />
+                    </div>
+                </div>
+
+                <div class="row right" style="margin-top: 20px;">
+                    <button type="button" class="btn muted" onclick="closeCategoryForm()" 
+                        style="width: auto;">
+                        Hủy
+                    </button>
+                    <button type="submit" class="btn primary" style="width: auto;">
+                        <i class="fas fa-save"></i> Lưu
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div id="footer"></div>
+
+    <!-- Scripts -->
+    <script src="assets/js/app.js"></script>
+    <script src="assets/js/categories.js"></script>
+    <script>
+        // Load header
+        function loadHeader() {
+            fetch('layouts/header.html')
+                .then(r => r.text())
+                .then(html => {
+                    document.getElementById('header').innerHTML = html;
+                });
+        }
+
+        loadHeader();
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function () {
+            renderCategoriesTable();
+        });
+
+        // Search handler
+        function handleSearch() {
+            const searchTerm = document.getElementById('cat-search').value;
+            renderCategoriesTable(searchTerm);
+        }
+    </script>
+</body>
+
+</html>
