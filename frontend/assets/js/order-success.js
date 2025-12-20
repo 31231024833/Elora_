@@ -1,7 +1,4 @@
 function init() {
-    loadOrderData();
-    displayOrderInfo();
-    
     // Khởi tạo AOS
     AOS.init({
         duration: 800,
@@ -9,6 +6,9 @@ function init() {
         once: true,
         mirror: false
     });
+    loadOrderData();
+    displayOrderInfo();
+    
     
     // Cập nhật số lượng giỏ hàng
     updateCartCount();

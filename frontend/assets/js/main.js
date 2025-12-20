@@ -9,7 +9,7 @@ let categories = [];
 let banners = [];
 
 // Cấu hình đường dẫn API
-const API_BASE = 'http://localhost:3000/api';
+import { API_BASE } from './config.js';
 
 // Các phần tử DOM
 const elements = {
@@ -56,7 +56,6 @@ async function initializeApp() {
         // Cập nhật số lượng giỏ hàng
         updateCartDisplay();
 
-        console.log('App initialized successfully');
     } catch (error) {
         console.error('Error initializing app:', error);
         showNotification('Có lỗi xảy ra khi tải trang', 'error');
@@ -138,30 +137,6 @@ function initializeSliders() {
 function initializeEventListeners() {
     // Hiệu ứng cuộn cho header
     window.addEventListener('scroll', handleScroll);
-
-    // Bật/tắt thanh tìm kiếm
-    const searchToggle = document.querySelector('.search-toggle');
-    if (searchToggle) {
-        searchToggle.addEventListener('click', toggleSearch);
-    }
-
-    // Bật/tắt giỏ hàng
-    const cartToggle = document.querySelector('.cart-toggle');
-    if (cartToggle) {
-        cartToggle.addEventListener('click', toggleCart);
-    }
-
-    // Bật/tắt menu người dùng
-    const userToggle = document.querySelector('.user-toggle');
-    if (userToggle) {
-        userToggle.addEventListener('click', toggleUserMenu);
-    }
-
-    // Bật/tắt menu di động
-    const mobileMenuToggle = document.querySelector('.mobile-menu-toggle');
-    if (mobileMenuToggle) {
-        mobileMenuToggle.addEventListener('click', toggleMobileMenu);
-    }
 
     // Nút lên đầu trang
     if (elements.backToTop) {
@@ -307,7 +282,6 @@ function renderBestsellerProducts() {
 function createProductCard(product, badgeType = '') {
     const discountPercent = product.originalPrice ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100) : 0;
     const thumbnail = product?.images?.length ? `${API_BASE}${product.images[0].url.substring(4)}` : product.image;
-    console.log("🚀 ~ createProductCard ~ product:", product._id)
 
     return `
         <div class="product-card lg:min-w-[400px] min-w-full" data-product-id="${product._id}" data-aos="fade-up">

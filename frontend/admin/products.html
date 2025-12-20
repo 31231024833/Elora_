@@ -5,7 +5,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Quản Lý Sản Phẩm - Spa Admin</title>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="assets/css/styles.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
 </head>
@@ -27,10 +29,9 @@
         <!-- Search & Filter -->
         <div class="card" style="margin-bottom: 20px;">
             <div class="row">
-                <input type="text" id="search-input" placeholder="Tìm kiếm sản phẩm..." 
+                <input type="text" id="search-input" placeholder="Tìm kiếm sản phẩm..."
                     style="flex: 1; margin-bottom: 10px;" onkeyup="handleSearch()" />
-                <select id="category-filter" onchange="handleSearch()" 
-                    style="width: 200px; margin: 0 0 0 10px;">
+                <select id="category-filter" onchange="handleSearch()" style="width: 200px; margin: 0 0 0 10px;">
                     <option value="">Tất cả danh mục</option>
                 </select>
             </div>
@@ -105,8 +106,7 @@
                     </div>
                     <div>
                         <label>Hình Ảnh</label>
-                        <input type="file" id="product-images" accept="image/*" multiple 
-                            style="padding: 6px;" />
+                        <input type="file" id="product-images" accept="image/*" multiple style="padding: 6px;" />
                     </div>
                 </div>
 
@@ -117,25 +117,24 @@
 
                 <div>
                     <label>Lợi Ích (ngăn cách bởi dấu phẩy)</label>
-                    <textarea id="product-benefits" rows="2" 
+                    <textarea id="product-benefits" rows="2"
                         placeholder="Ví dụ: Làm sạch sâu, Thư giãn, Trẻ hóa da"></textarea>
                 </div>
 
                 <div>
                     <label>Phù Hợp Với (ngăn cách bởi dấu phẩy)</label>
-                    <textarea id="product-suitable-for" rows="2" 
+                    <textarea id="product-suitable-for" rows="2"
                         placeholder="Ví dụ: Da khô, Da nhạy cảm, Mọi loại da"></textarea>
                 </div>
 
                 <div>
                     <label>Thành Phần (ngăn cách bởi dấu phẩy)</label>
-                    <textarea id="product-ingredients" rows="2" 
+                    <textarea id="product-ingredients" rows="2"
                         placeholder="Ví dụ: Vitamin C, Collagen, Aloe Vera"></textarea>
                 </div>
 
                 <div class="row right" style="margin-top: 20px;">
-                    <button type="button" class="btn muted" onclick="closeProductModal()" 
-                        style="width: auto;">
+                    <button type="button" class="btn muted" onclick="closeProductModal()" style="width: auto;">
                         Hủy
                     </button>
                     <button type="submit" class="btn primary" style="width: auto;">
@@ -148,10 +147,10 @@
 
     <!-- Footer -->
     <div id="footer"></div>
-
+    <script src="../assets/js/config.js"></script>
     <!-- Scripts -->
     <script>
-        const API_BASE = 'http://localhost:3000/api';
+        import { API_BASE } from '../assets/js/configs.js';
         let allProducts = [];
         let allCategories = [];
         let editingProductId = null;
@@ -232,7 +231,7 @@
 
             tbody.innerHTML = products.map(product => {
                 const category = allCategories.find(c => c._id === product.category);
-                const imageUrl = product.images && product.images.length > 0 
+                const imageUrl = product.images && product.images.length > 0
                     ? `${API_BASE}/files/${product.images[0]?.gridfsId}`
                     : "";
 
@@ -292,7 +291,7 @@
             editingProductId = productId;
             const modal = document.getElementById('product-modal');
             const form = document.getElementById('product-form');
-            
+
             form.reset();
             document.getElementById('product-id').value = '';
 
@@ -343,7 +342,7 @@
             formData.append('originalPrice', document.getElementById('product-original-price').value || '');
             formData.append('duration', document.getElementById('product-duration').value);
             formData.append('description', document.getElementById('product-description').value);
-            
+
             // Xử lý arrays
             const benefits = document.getElementById('product-benefits').value
                 .split(',').map(s => s.trim()).filter(s => s);

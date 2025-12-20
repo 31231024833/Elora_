@@ -243,7 +243,7 @@ function renderSelectedServices() {
             <div class="flex-1 min-w-0">
                 <h5 class="font-semibold text-gray-800 truncate">${service.name}</h5>
                 <p class="text-sm text-primary-500 font-medium">${service.price}</p>
-                <p class="text-xs text-gray-500">${service.duration}</p>
+                <p class="text-xs text-gray-500">${service.duration} phút</p>
             </div>
             <button type="button" 
                     onclick="removeSelectedService('${service.id}')"

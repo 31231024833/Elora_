@@ -1,3 +1,4 @@
+import { API_BASE } from './config.js';
 // Khởi tạo quản lý thanh toán
 let checkoutManager;
 
@@ -189,7 +190,7 @@ function renderCheckoutItems() {
 function getImageUrl(image) {
     // Helper function to construct image URL
     if (image.startsWith('http')) return image;
-    return `http://localhost:3000/api/files/${image}`;
+    return `${API_BASE}/files/${image}`;
 }
 
 function setupPaymentMethods() {

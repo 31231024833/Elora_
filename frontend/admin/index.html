@@ -1,132 +1,72 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi">
 
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dashboard - Spa Admin</title>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Admin - Dashboard</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="assets/css/styles.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
 </head>
 
 <body>
-    <!-- Header -->
     <div id="header"></div>
 
-    <!-- Main Content -->
     <main class="container">
-        <!-- Page Header -->
-        <div class="row between" style="margin-bottom: 20px;">
-            <h1 class="page-title">
-                <i class="fas fa-chart-line" style="color: var(--color-primary-500); margin-right: 8px;"></i>
-                Dashboard
-            </h1>
-        </div>
+        <h1 class="page-title">Dashboard</h1>
 
-        <!-- Stats Cards -->
-        <section class="grid grid-4 cards-row" style="margin-bottom: 20px;">
-            <div class="card" style="background: linear-gradient(135deg, var(--color-primary-500), var(--color-primary-600)); color: white;">
-                <div style="display: flex; align-items: center; justify-content: space-between;">
-                    <div>
-                        <p style="font-size: 0.85rem; opacity: 0.9; margin-bottom: 8px;">Sản phẩm</p>
-                        <p id="stat-products" class="stat-number" style="color: white;">
-                            <i class="fas fa-spinner fa-spin"></i>
-                        </p>
-                    </div>
-                    <i class="fas fa-box-open" style="font-size: 2.5rem; opacity: 0.3;"></i>
-                </div>
+        <section class="grid grid-4 cards-row">
+            <div class="card">
+                <h3>Sản phẩm</h3>
+                <p id="stat-products" class="stat-number">0</p>
             </div>
-            <div class="card" style="background: linear-gradient(135deg, var(--color-secondary-500), var(--color-secondary-600)); color: white;">
-                <div style="display: flex; align-items: center; justify-content: space-between;">
-                    <div>
-                        <p style="font-size: 0.85rem; opacity: 0.9; margin-bottom: 8px;">Danh mục</p>
-                        <p id="stat-categories" class="stat-number" style="color: white;">
-                            <i class="fas fa-spinner fa-spin"></i>
-                        </p>
-                    </div>
-                    <i class="fas fa-tags" style="font-size: 2.5rem; opacity: 0.3;"></i>
-                </div>
+            <div class="card">
+                <h3>Danh mục</h3>
+                <p id="stat-categories" class="stat-number">0</p>
             </div>
-            <div class="card" style="background: linear-gradient(135deg, var(--color-warning), #f97316); color: white;">
-                <div style="display: flex; align-items: center; justify-content: space-between;">
-                    <div>
-                        <p style="font-size: 0.85rem; opacity: 0.9; margin-bottom: 8px;">Đơn chờ</p>
-                        <p id="stat-orders" class="stat-number" style="color: white;">
-                            <i class="fas fa-spinner fa-spin"></i>
-                        </p>
-                    </div>
-                    <i class="fas fa-clock" style="font-size: 2.5rem; opacity: 0.3;"></i>
-                </div>
+            <div class="card">
+                <h3>Đơn chờ giao</h3>
+                <p id="stat-orders" class="stat-number">0</p>
             </div>
-            <div class="card" style="background: linear-gradient(135deg, var(--color-success), #059669); color: white;">
-                <div style="display: flex; align-items: center; justify-content: space-between;">
-                    <div>
-                        <p style="font-size: 0.85rem; opacity: 0.9; margin-bottom: 8px;">Doanh thu</p>
-                        <p id="stat-sales" class="stat-number" style="color: white; font-size: 1.2rem;">
-                            <i class="fas fa-spinner fa-spin"></i>
-                        </p>
-                    </div>
-                    <i class="fas fa-dollar-sign" style="font-size: 2.5rem; opacity: 0.3;"></i>
-                </div>
+            <div class="card">
+                <h3>Doanh thu (₫)</h3>
+                <p id="stat-sales" class="stat-number">0</p>
             </div>
         </section>
 
-        <!-- Sales Chart -->
-        <section class="card" style="margin-bottom: 20px;">
-            <h2 style="margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
-                <i class="fas fa-chart-bar" style="color: var(--color-primary-500);"></i>
-                Biểu đồ bán hàng (7 ngày gần nhất)
-            </h2>
+        <section class="card mt">
+            <h2>Biểu đồ bán hàng (7 ngày gần nhất)</h2>
             <div id="sales-chart" class="chart"></div>
         </section>
 
-        <!-- Pending Orders -->
-        <section class="card">
-            <h2 style="margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
-                <i class="fas fa-list" style="color: var(--color-warning);"></i>
-                Đơn chờ giao
-            </h2>
-            <div id="orders-list">
-                <div style="text-align: center; padding: 40px;">
-                    <i class="fas fa-spinner fa-spin" style="font-size: 24px; color: var(--color-primary-500);"></i>
-                    <p style="margin-top: 10px; color: var(--color-gray-500);">Đang tải dữ liệu...</p>
-                </div>
-            </div>
+        <section class="card mt">
+            <h2>Đơn chờ giao</h2>
+            <div id="orders-list"></div>
         </section>
     </main>
 
-    <!-- Footer -->
     <div id="footer"></div>
 
-    <!-- Scripts -->
     <script src="assets/js/app.js"></script>
     <script>
-        // Load header
-        function loadHeader() {
-            fetch('layouts/header.html')
-                .then(r => r.text())
-                .then(html => {
-                    document.getElementById('header').innerHTML = html;
-                });
-        }
+        // load header/footer và render thống kê
+        fetch("layouts/header.html").then(r => r.text()).then(t => document.querySelector("#header").innerHTML = t);
+        fetch("layouts/footer.html").then(r => r.text()).then(t => document.querySelector("#footer").innerHTML = t);
 
-        loadHeader();
+        const db = getDB();
+        console.log(db);
+        
+        document.getElementById('stat-products').innerText = db.products.length;
+        document.getElementById('stat-categories').innerText = db.categories.length;
+        document.getElementById('stat-orders').innerText = db.orders.filter(o => o.status === 'pending').length;
+        document.getElementById('stat-sales').innerText = db.orders.reduce((s, o) => s + o.total, 0).toLocaleString();
 
-        // Load and render statistics
-        document.addEventListener('DOMContentLoaded', function () {
-            const db = getDB();
-            
-            // Update stats
-            document.getElementById('stat-products').innerText = db.products.length;
-            document.getElementById('stat-categories').innerText = db.categories.length;
-            document.getElementById('stat-orders').innerText = db.orders.filter(o => o.status === 'pending').length;
-            document.getElementById('stat-sales').innerText = '₫' + db.orders.reduce((s, o) => s + o.total, 0).toLocaleString();
-
-            // Render charts
-            renderSalesChart('#sales-chart');
-            renderPendingOrders('#orders-list');
-        });
+        // render simple sales chart and pending orders
+        renderSalesChart('#sales-chart');
+        renderPendingOrders('#orders-list');
     </script>
 </body>
 
