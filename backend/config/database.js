@@ -6,7 +6,8 @@ dotenv.config();
 // Kết nối MongoDB
 const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/elora_spa', {
+    console.log(process.env.MONGODB_URIS);
+    const conn = await mongoose.connect(process.env.MONGODB_URI || 'mongodb+srv://appuser:appuser@elora.muz6n87.mongodb.net/?appName=ELORA', {
       useNewUrlParser: true,
       useUnifiedTopology: true
     });
