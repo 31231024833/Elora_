@@ -1,105 +1,139 @@
-/* app.js
-   Core: fake data seed + helpers to read/write localStorage + common render functions.
-   All other page-specific modules import (use) these functions.
-*/
+const API_BASE = window.CONFIG.API_BASE;
+// load header/footer và render thống kê
+fetch("layouts/header.html").then(r => r.text()).then(t => document.querySelector("#header").innerHTML = t);
+fetch("layouts/footer.html").then(r => r.text()).then(t => document.querySelector("#footer").innerHTML = t);
+db = { products: [], categories: [], bookings: [] };
 
-// STORAGE KEY
-const STORAGE_KEY = 'spa_admin_data_v1';
+document.addEventListener('DOMContentLoaded', async function () {
+    await loadData();
+    document.getElementById('stat-products').innerText = db.products.length;
+    document.getElementById('stat-categories').innerText = db.categories.length;
+    document.getElementById('stat-orders').innerText = db.bookings.filter(b => b.status === 'pending').length;
+    document.getElementById('stat-sales').innerText = db.bookings.reduce((s, b) => s + b.finalAmount, 0).toLocaleString();
+    console.log("🚀 ~ db.bookings:", db.bookings)
+    renderSalesChart('#sales-chart');
+    renderPendingOrders('#orders-list');
 
-// generate unique id
-function uid(prefix='id'){
-  return prefix + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+});
+
+async function loadData() {
+    await fetch(`${API_BASE}/products`)
+        .then(res => res.json())
+        .then(data => {
+            db.products = data.data;
+        });
+
+    await fetch(`${API_BASE}/categories`)
+        .then(res => res.json())
+        .then(data => {
+            db.categories = data.data;
+        });
+
+    await fetch(`${API_BASE}/bookings`)
+        .then(res => res.json())
+        .then(data => {
+            db.bookings = data.bookings;
+        });
+}
+function calcDailySales(bookings, days = 7) {
+    const map = {};
+    const today = new Date();
+
+    // init days
+    for (let i = days - 1; i >= 0; i--) {
+        const d = new Date(today);
+        d.setDate(d.getDate() - i);
+        const key = d.toISOString().slice(0, 10);
+        map[key] = 0;
+    }
+
+    bookings.forEach(b => {
+        const day = new Date(b.createdAt).toISOString().slice(0, 10);
+        if (map[day] !== undefined) {
+            map[day] += b.finalAmount;
+        }
+    });
+
+    return {
+        labels: Object.keys(map),
+        data: Object.values(map)
+    };
 }
 
-// seed fake data (run once)
-function seedData(){
-  const now = Date.now();
-  const data = {
-    categories: [
-      { id: 'c1', name: 'Skincare' },
-      { id: 'c2', name: 'Body' },
-      { id: 'c3', name: 'Haircare' }
-    ],
-    promotions: [
-      { id: 'p1', name: 'Tết Sale', code: 'TET20', discount: 20 },
-      { id: 'p2', name: 'Summer Offer', code: 'SUM10', discount: 10 }
-    ],
-    products: [
-      { id: 'prd1', name: 'Serum A', price: 199000, categoryId: 'c1', promoId: 'p1', stock: 50 },
-      { id: 'prd2', name: 'Shampoo B', price: 129000, categoryId: 'c3', promoId: null, stock: 80 },
-      { id: 'prd3', name: 'Body Oil C', price: 249000, categoryId: 'c2', promoId: 'p2', stock: 30 }
-    ],
-    orders: [
-      { id: 'o1', createdAt: now - 86400000*1, total: 328000, status: 'pending' },
-      { id: 'o2', createdAt: now - 86400000*2, total: 129000, status: 'delivered' },
-      { id: 'o3', createdAt: now - 86400000*3, total: 499000, status: 'pending' }
-    ],
-    // simplistic sales sample per day (for chart)
-    sales: [
-      { date: now - 86400000*6, total: 120000 },
-      { date: now - 86400000*5, total: 240000 },
-      { date: now - 86400000*4, total: 180000 },
-      { date: now - 86400000*3, total: 300000 },
-      { date: now - 86400000*2, total: 220000 },
-      { date: now - 86400000*1, total: 150000 },
-      { date: now, total: 400000 }
-    ]
-  };
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  return data;
+function renderSalesChart(selector) {
+    const chartEl = document.querySelector(selector);
+    if (!chartEl) return;
+
+    bookings = db.bookings;
+
+    const { labels, data } = calcDailySales(bookings, 7);
+    const max = Math.max(...data, 1);
+
+    chartEl.innerHTML = '';
+
+    data.forEach((value, index) => {
+        const height = (value / max) * 100;
+
+        const bar = document.createElement('div');
+        bar.className = 'simple-bar';
+        bar.style.height = height + '%';
+
+        bar.innerHTML = `
+            <span>${value.toLocaleString('vi-VN')} ₫</span>
+            <label>${labels[index].slice(5)}</label>
+        `;
+
+        chartEl.appendChild(bar);
+    });
 }
 
-// get DB (read)
-function getDB(){
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if(!raw) return seedData();
-  try {
-    return JSON.parse(raw);
-  } catch (e) {
-    return seedData();
-  }
+async function renderPendingOrders(selector, limit = 5) {
+    const container = document.querySelector(selector);
+    if (!container) return;
+
+    const bookings = db.bookings;
+
+    const pendingOrders = bookings
+        .filter(b =>
+            b.status === 'pending' ||
+            b.status === 'confirmed'
+        )
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        .slice(0, limit);
+
+    if (!pendingOrders.length) {
+        container.innerHTML = `<p class="muted">Không có đơn chờ xử lý</p>`;
+        return;
+    }
+
+    container.innerHTML = pendingOrders.map(order => `
+        <div class="order-item">
+            <div class="order-info">
+                <strong>${order.fullname || 'Khách hàng'}</strong>
+                <div class="muted">
+                    ${new Date(order.createdAt).toLocaleString('vi-VN')}
+                </div>
+            </div>
+
+            <div class="order-meta">
+                <span class="badge ${order.status}">
+                    ${formatOrderStatus(order.status)}
+                </span>
+                <div class="price">
+                    ${order.finalAmount.toLocaleString('vi-VN')} ₫
+                </div>
+            </div>
+        </div>
+    `).join('');
 }
 
-// save DB (write)
-function saveDB(db){
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+function formatOrderStatus(status) {
+    const map = {
+        pending: 'Chờ xử lý',
+        confirmed: 'Đã xác nhận',
+        in_progress: 'Đang làm',
+        completed: 'Hoàn thành',
+        cancelled: 'Đã huỷ'
+    };
+    return map[status] || status;
 }
-
-/* utility renders used across pages */
-
-// render sales chart (selector can be '#id' or element). If large true => bigger bars
-function renderSalesChart(selector, large=false){
-  const el = (typeof selector === 'string') ? document.querySelector(selector) : selector;
-  if(!el) return;
-  const db = getDB();
-  const arr = db.sales.slice(-7);
-  const max = Math.max(...arr.map(s=>s.total), 1);
-  el.innerHTML = arr.map(s=>{
-    const h = (s.total / max) * 100;
-    const label = new Date(s.date).toLocaleDateString();
-    return `<div class="bar" style="height:${h}%" title="${label} — ${s.total.toLocaleString()}">${s.total?Number(s.total).toLocaleString():''}</div>`;
-  }).join('');
-}
-
-// render pending orders list
-function renderPendingOrders(selector){
-  const el = document.querySelector(selector);
-  if(!el) return;
-  const db = getDB();
-  const pending = db.orders.filter(o=>o.status === 'pending');
-  if(pending.length === 0){ el.innerHTML = '<div class="muted">Không có đơn chờ giao.</div>'; return; }
-  el.innerHTML = pending.map(o=>`<div class="card"><strong>${o.id}</strong> — ${new Date(o.createdAt).toLocaleString()} — ₫${o.total.toLocaleString()}</div>`).join('');
-}
-
-// helper: reset seed (for convenience)
-function seedReset(){
-  if(confirm('Reset dữ liệu mẫu?')){ seedData(); location.reload(); }
-}
-
-/* Expose functions globally for page scripts */
-window.getDB = getDB;
-window.saveDB = saveDB;
-window.uid = uid;
-window.renderSalesChart = renderSalesChart;
-window.renderPendingOrders = renderPendingOrders;
-window.seedReset = seedReset;

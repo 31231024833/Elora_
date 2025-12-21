@@ -147,10 +147,10 @@
 
     <!-- Footer -->
     <div id="footer"></div>
-    <script src="../assets/js/config.js"></script>
+    <script src="./assets/js/config.js"></script>
     <!-- Scripts -->
     <script>
-        import { API_BASE } from '../assets/js/configs.js';
+        const API_BASE = window.CONFIG.API_BASE;
         let allProducts = [];
         let allCategories = [];
         let editingProductId = null;

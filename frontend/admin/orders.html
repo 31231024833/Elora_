@@ -77,7 +77,7 @@
     <div id="footer"></div>
 
     <!-- Scripts -->
-    <script src="assets/js/app.js"></script>
+    <script src="assets/js/config.js"></script>
     <script src="assets/js/orders.js"></script>
     <script>
         // Load header
@@ -90,17 +90,6 @@
         }
 
         loadHeader();
-
-        // Initialize
-        document.addEventListener('DOMContentLoaded', function () {
-            renderOrdersTable();
-            renderOrdersStats();
-        });
-
-        // Filter handler
-        function handleFilter() {
-            renderOrdersTable();
-        }
     </script>
 </body>
 

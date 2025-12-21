@@ -20,7 +20,7 @@
 
         <section class="grid grid-4 cards-row">
             <div class="card">
-                <h3>Sản phẩm</h3>
+                <h3>Dịch vụ</h3>
                 <p id="stat-products" class="stat-number">0</p>
             </div>
             <div class="card">
@@ -28,7 +28,7 @@
                 <p id="stat-categories" class="stat-number">0</p>
             </div>
             <div class="card">
-                <h3>Đơn chờ giao</h3>
+                <h3>Chờ xác nhận</h3>
                 <p id="stat-orders" class="stat-number">0</p>
             </div>
             <div class="card">
@@ -43,31 +43,15 @@
         </section>
 
         <section class="card mt">
-            <h2>Đơn chờ giao</h2>
+            <h2>Đơn chờ xác nhận</h2>
             <div id="orders-list"></div>
         </section>
     </main>
 
     <div id="footer"></div>
 
+    <script src="./assets/js/config.js"></script>
     <script src="assets/js/app.js"></script>
-    <script>
-        // load header/footer và render thống kê
-        fetch("layouts/header.html").then(r => r.text()).then(t => document.querySelector("#header").innerHTML = t);
-        fetch("layouts/footer.html").then(r => r.text()).then(t => document.querySelector("#footer").innerHTML = t);
-
-        const db = getDB();
-        console.log(db);
-        
-        document.getElementById('stat-products').innerText = db.products.length;
-        document.getElementById('stat-categories').innerText = db.categories.length;
-        document.getElementById('stat-orders').innerText = db.orders.filter(o => o.status === 'pending').length;
-        document.getElementById('stat-sales').innerText = db.orders.reduce((s, o) => s + o.total, 0).toLocaleString();
-
-        // render simple sales chart and pending orders
-        renderSalesChart('#sales-chart');
-        renderPendingOrders('#orders-list');
-    </script>
 </body>
 
 </html>

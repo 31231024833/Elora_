@@ -5,7 +5,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Quản Lý Khách Hàng - Spa Admin</title>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="assets/css/styles.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
 </head>
@@ -23,13 +25,14 @@
 
         <!-- Search Bar -->
         <div class="card" style="margin-bottom: 20px;">
-            <input type="text" id="search-input" placeholder="Tìm kiếm theo tên, email, số điện thoại..." 
+            <input type="text" id="search-input" placeholder="Tìm kiếm theo tên, email, số điện thoại..."
                 style="width: 100%; margin: 0;" onkeyup="handleSearch()" />
         </div>
 
         <!-- Stats Cards -->
         <div class="grid grid-4 cards-row" style="margin-bottom: 20px;">
-            <div class="card" style="background: linear-gradient(135deg, var(--color-primary-500), var(--color-primary-600)); color: white;">
+            <div class="card"
+                style="background: linear-gradient(135deg, var(--color-primary-500), var(--color-primary-600)); color: white;">
                 <div style="display: flex; align-items: center; justify-content: space-between;">
                     <div>
                         <p style="font-size: 0.85rem; opacity: 0.9; margin-bottom: 8px;">Tổng khách hàng</p>
@@ -51,7 +54,8 @@
                     <i class="fas fa-user-plus" style="font-size: 2.5rem; opacity: 0.3;"></i>
                 </div>
             </div>
-            <div class="card" style="background: linear-gradient(135deg, var(--color-secondary-500), var(--color-secondary-600)); color: white;">
+            <div class="card"
+                style="background: linear-gradient(135deg, var(--color-secondary-500), var(--color-secondary-600)); color: white;">
                 <div style="display: flex; align-items: center; justify-content: space-between;">
                     <div>
                         <p style="font-size: 0.85rem; opacity: 0.9; margin-bottom: 8px;">Khách đã xác thực</p>
@@ -118,8 +122,7 @@
             </div>
 
             <div class="row right" style="margin-top: 20px;">
-                <button type="button" class="btn muted" onclick="closeCustomerModal()" 
-                    style="width: auto;">
+                <button type="button" class="btn muted" onclick="closeCustomerModal()" style="width: auto;">
                     Đóng
                 </button>
             </div>
@@ -130,9 +133,9 @@
     <div id="footer"></div>
 
     <!-- Scripts -->
-     <script src="../assets/js/config.js"></script>
+    <script src="./assets/js/config.js"></script>
     <script>
-        import { API_BASE } from '../assets/js/configs.js';
+        const API_BASE = window.CONFIG.API_BASE;
         let allCustomers = [];
 
         // Khởi tạo
@@ -193,9 +196,6 @@
                     <tr>
                         <td>
                             <div style="display: flex; align-items: center; gap: 10px;">
-                                <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--gradient-primary); display: flex; align-items: center; justify-content: center; color: white; font-weight: 600;">
-                                    ${(customer.firstName || 'U').charAt(0).toUpperCase()}
-                                </div>
                                 <div>
                                     <strong>${fullName || customer.email}</strong>
                                     ${customer.isVerified ? '<i class="fas fa-check-circle" style="color: var(--color-success); margin-left: 4px;" title="Đã xác thực"></i>' : ''}

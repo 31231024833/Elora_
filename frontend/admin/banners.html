@@ -49,7 +49,7 @@
                         <th>Tiêu Đề</th>
                         <th style="width: 120px;">Vị Trí</th>
                         <th style="width: 100px;">Thứ Tự</th>
-                        <th style="width: 100px;">Trạng Thái</th>
+                        <th style="width: 150px;">Trạng Thái</th>
                         <th style="width: 200px;">Hành Động</th>
                     </tr>
                 </thead>
@@ -154,10 +154,11 @@
 
     <!-- Footer -->
     <div id="footer"></div>
-    <script src="../assets/js/config.js"></script>
+    <script src="./assets/js/config.js"></script>
+
     <!-- Scripts -->
     <script>
-        import { API_BASE } from '../assets/js/config.js';
+        const API_BASE = window.CONFIG.API_BASE;
         let allBanners = [];
         let editingBannerId = null;
 

@@ -1,48 +1,138 @@
-/* orders.js - orders listing + simple stats */
-function renderOrdersTable(){
-  const db = getDB();
-  const table = document.getElementById('orders-table');
-  if(!table) return;
-  const rows = db.orders.map(o=>`<tr>
-    <td>${o.id}</td>
-    <td>${new Date(o.createdAt).toLocaleString()}</td>
-    <td>₫${o.total.toLocaleString()}</td>
-    <td>${o.status}</td>
-    <td>
-      ${o.status === 'pending' ? `<button class="btn" onclick="markDelivered('${o.id}')">Đã giao</button>` : ''}
-      <button class="btn muted" onclick="deleteOrder('${o.id}')">Xóa</button>
-    </td>
-  </tr>`).join('');
-  table.innerHTML = `<thead><tr><th>ID</th><th>Ngày</th><th>Tổng</th><th>Trạng thái</th><th>Hành động</th></tr></thead><tbody>${rows}</tbody>`;
+let bookings = [];
+const API_BASE = window.CONFIG.API_BASE;
+document.addEventListener('DOMContentLoaded', async function () {
+    await loadData();
+    console.log("🚀 ~ db.bookings:", bookings)
+    renderBookingsTable();
+});
+
+async function loadData() {
+    await fetch(`${API_BASE}/bookings`)
+        .then(res => res.json())
+        .then(data => {
+            bookings = data.bookings;
+        });
 }
 
-function markDelivered(id){
-  if(!confirm('Đánh dấu là đã giao?')) return;
-  const db = getDB();
-  const o = db.orders.find(x=>x.id===id);
-  if(o) o.status = 'delivered';
-  saveDB(db);
-  renderOrdersTable();
-  renderOrdersStats();
-  alert('Đã cập nhật');
+function renderBookingsTable(list = bookings) {
+    const tbody = document.getElementById('orders-tbody');
+    if (!tbody) return;
+
+    if (!list.length) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" style="text-align:center;padding:20px">
+                    Không có đơn hàng
+                </td>
+            </tr>`;
+        return;
+    }
+
+    tbody.innerHTML = list.map(b => `
+        <tr data-booking-id="${b._id}">
+            <td>${b._id.slice(-6).toUpperCase()}</td>
+            <td>
+                ${new Date(b.createdAt).toLocaleDateString('vi-VN')}
+                <br>
+                <small class="muted">${b.bookingTime}</small>
+            </td>
+            <td>
+                ${b.finalAmount.toLocaleString('vi-VN')} ₫
+            </td>
+            <td>
+                <span class="badge ${b.status}">
+                    ${formatBookingStatus(b.status)}
+                </span>
+            </td>
+            <td>
+                ${renderBookingActions(b)}
+            </td>
+        </tr>
+    `).join('');
 }
 
-function deleteOrder(id){
-  if(!confirm('Xóa đơn?')) return;
-  const db = getDB();
-  db.orders = db.orders.filter(x=>x.id!==id);
-  saveDB(db);
-  renderOrdersTable();
-  renderOrdersStats();
-  alert('Đã xóa');
+function renderBookingActions(b) {
+    if (b.status === 'pending') {
+        return `
+            <button class="btn" onclick="confirmBooking('${b._id}')">
+                Xác nhận
+            </button>
+            <button class="btn muted" onclick="cancelBooking('${b._id}')">
+                Huỷ
+            </button>
+        `;
+    }
+
+    if (b.status === 'confirmed') {
+        return `
+            <button class="btn" onclick="completeBooking('${b._id}')">
+                Hoàn thành
+            </button>
+        `;
+    }
+
+    return `
+        <button class="btn muted" onclick="viewBooking('${b._id}')">
+            Xem
+        </button>
+    `;
 }
 
-function renderOrdersStats(){
-  const db = getDB();
-  const el = document.getElementById('orders-stats');
-  if(!el) return;
-  const pending = db.orders.filter(o=>o.status === 'pending').length;
-  const delivered = db.orders.filter(o=>o.status === 'delivered').length;
-  const total = db.orders.reduce((s,o)=>s+o.total,0);
-  el.innerHTML = `<div class="row"><div class="card">Chờ giao: <strong>${pending}</strong></div><div class="card">Đã giao: <strong>${delivered}</strong></div><div class="card">Tổng doanh thu: <strong>₫${total.toLocaleString()}</strong></div></div>`;
+function formatBookingStatus(status) {
+    const map = {
+        pending: 'Chờ xác nhận',
+        confirmed: 'Đã xác nhận',
+        in_progress: 'Đang thực hiện',
+        completed: 'Hoàn thành',
+        cancelled: 'Đã huỷ'
+    };
+    return map[status] || status;
+}
+
+function handleFilter() {
+    const status = document.getElementById('status-filter').value;
+
+    if (!status) {
+        renderBookingsTable(bookings);
+        return;
+    }
+
+    const filtered = bookings.filter(b => b.status === status);
+    renderBookingsTable(filtered);
+}
+
+async function confirmBooking(bookingId) {
+    if (!confirm('Xác nhận đơn đặt lịch này?')) return;
+
+    try {
+        const res = await fetch(`${API_BASE}/bookings/${bookingId}/status`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                status: 'completed'
+            })
+        });
+
+        const result = await res.json();
+
+        if (!res.ok) {
+            alert(result.error || 'Không thể xác nhận booking');
+            return;
+        }
+
+        // cập nhật local state (frontend)
+        const index = bookings.findIndex(b => b._id === bookingId);
+        if (index !== -1) {
+            bookings[index] = result.booking;
+        }
+
+        renderBookingsTable();
+        alert('Đã xác nhận đặt lịch');
+
+    } catch (error) {
+        console.error('❌ confirmBooking error:', error);
+        alert('Lỗi kết nối server');
+    }
 }
