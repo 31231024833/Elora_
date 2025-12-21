@@ -10,6 +10,11 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Admin - Sales</title>
     <link rel="stylesheet" href="assets/css/styles.css" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/styles.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
 </head>
 
 <body>
@@ -24,21 +29,18 @@
         </section>
 
         <section class="card mt">
-            <h2>Doanh thu theo tháng (mẫu)</h2>
+            <h2>Doanh thu theo tháng</h2>
             <div id="sales-monthly"></div>
         </section>
     </main>
 
     <div id="footer"></div>
 
-    <script src="assets/js/app.js"></script>
+    <script src="assets/js/config.js"></script>
     <script src="assets/js/sales.js"></script>
     <script>
         fetch("layouts/header.html").then(r => r.text()).then(t => document.querySelector("#header").innerHTML = t);
         fetch("layouts/footer.html").then(r => r.text()).then(t => document.querySelector("#footer").innerHTML = t);
-
-        renderSalesChart('#sales-chart-large', true);
-        renderSalesMonthly();
     </script>
 </body>
 

@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     document.getElementById('stat-products').innerText = db.products.length;
     document.getElementById('stat-categories').innerText = db.categories.length;
     document.getElementById('stat-orders').innerText = db.bookings.filter(b => b.status === 'pending').length;
-    document.getElementById('stat-sales').innerText = db.bookings.reduce((s, b) => s + b.finalAmount, 0).toLocaleString();
+    document.getElementById('stat-sales').innerText = db.bookings.reduce((s, b) => b?.status === "completed" ? s + b.finalAmount : s, 0).toLocaleString();
     console.log("🚀 ~ db.bookings:", db.bookings)
     renderSalesChart('#sales-chart');
     renderPendingOrders('#orders-list');
@@ -48,6 +48,7 @@ function calcDailySales(bookings, days = 7) {
     }
 
     bookings.forEach(b => {
+        if (b.status !== 'completed') return;
         const day = new Date(b.createdAt).toISOString().slice(0, 10);
         if (map[day] !== undefined) {
             map[day] += b.finalAmount;

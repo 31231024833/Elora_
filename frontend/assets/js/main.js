@@ -611,23 +611,23 @@ function renderTestimonials() {
     const testimonials = [
         {
             content: "Dịch vụ massage tại Elora thật tuyệt vời! Tôi cảm thấy rất thư giãn và thoải mái sau buổi trải nghiệm. Nhân viên chuyên nghiệp và thân thiện.",
-            author: "Nguyễn Thị Lan",
+            author: "Đỗ Thị Bích Thủy",
             role: "Khách hàng VIP",
-            avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=80&h=80&fit=crop&crop=face",
+            avatar: "./assets/images/team-image/mem1.JPG",
             rating: 5
         },
         {
             content: "Spa có không gian rất đẹp và sang trọng. Các liệu trình chăm sóc da rất hiệu quả, da tôi trở nên mềm mại và rạng rỡ hơn hẳn.",
-            author: "Trần Minh Anh",
+            author: "Dương Hồng Vân",
             role: "Beauty Blogger",
-            avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&h=80&fit=crop&crop=face",
+            avatar: "./assets/images/team-image/mem2.jpg",
             rating: 5
         },
         {
             content: "Tôi đã thử nhiều spa khác nhưng Elora là nơi tôi cảm thấy hài lòng nhất. Dịch vụ chuyên nghiệp, giá cả hợp lý và hiệu quả rõ rệt.",
-            author: "Lê Văn Đức",
+            author: "Phạm Hoàng Mỹ",
             role: "Doanh nhân",
-            avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&crop=face",
+            avatar: "./assets/images/team-image/mem5.jpg",
             rating: 5
         }
     ];

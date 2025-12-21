@@ -38,7 +38,7 @@ function displayOrderInfo() {
     // Chi tiết đơn hàng
     document.getElementById('order-id').textContent = orderData.orderId;
     document.getElementById('order-date').textContent = formatDate(new Date(orderData.createdAt));
-    document.getElementById('order-total').textContent = formatPrice(orderData.total);
+    document.getElementById('order-total').textContent = formatPrice(orderData.finalAmount);
     document.getElementById('payment-method').textContent = getPaymentMethodText(orderData.paymentMethod);
 
     // Thông tin khách hàng

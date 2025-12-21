@@ -931,13 +931,11 @@ function addProductEventListeners(container) {
     });
 
     // Product card/item click
-    container.querySelectorAll('.product-card, .product-list-item').forEach(item => {
+    container.querySelectorAll('.product-card, .product-list-item, .view-details-btn').forEach(item => {
         item.addEventListener('click', function (e) {
             if (!e.target.closest('button')) {
                 const productId = this.dataset.productId;
-                if (window.SpaApp && window.SpaApp.viewProductDetails) {
-                    window.SpaApp.viewProductDetails(productId);
-                }
+                window.location.href = `product-detail.html?id=${productId}`;
             }
         });
     });
