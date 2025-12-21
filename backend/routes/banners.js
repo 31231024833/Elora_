@@ -72,7 +72,7 @@ router.post('/', upload.single('image'), uploadToGridFS, async (req, res) => {
         const {
             title,
             description,
-            type,
+            position,
             linkUrl,
             buttonText,
             order,
@@ -80,26 +80,18 @@ router.post('/', upload.single('image'), uploadToGridFS, async (req, res) => {
         } = req.body;
 
         // Kiểm tra dữ liệu đầu vào
-        if (!title || !type) {
+        if (!title || !position) {
             return res.status(400).json({
                 error: 'Vui lòng điền đầy đủ thông tin: tiêu đề và loại banner'
             });
         }
-
-        // Validate type
-        const validTypes = ['main_slider', 'side_banner', 'promotional', 'category'];
-        if (!validTypes.includes(type)) {
-            return res.status(400).json({
-                error: 'Loại banner không hợp lệ. Chỉ chấp nhận: ' + validTypes.join(', ')
-            });
-        }
-
+        
         console.log("🚀 ~ req.uploadedFile:", req.uploadedFile.id)
         // Tạo banner mới
         const newBanner = new Banner({
             title,
             description: description || '',
-            type,
+            position,
             image: {
                 filename: req.uploadedFile.filename,
                 originalname: req.uploadedFile.originalname,

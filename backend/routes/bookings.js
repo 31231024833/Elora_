@@ -74,18 +74,18 @@ router.post('/', async (req, res) => {
     try {
         const {
             customerId,
-            fullname,
+            fullName,
             phone,
             email,
             services,
-            appointmentDate,
-            appointmentTime,
+            bookingDate,
+            bookingTime,
             notes,
             finalAmount
         } = req.body;
 
         // Kiểm tra dữ liệu đầu vào
-        if (!fullname || !phone || !email || !services || !appointmentDate || !appointmentTime) {
+        if (!fullName || !phone || !email || !services || !bookingDate || !bookingTime) {
             return res.status(400).json({
                 error: 'Vui lòng điền đầy đủ thông tin: khách hàng, dịch vụ, ngày và giờ'
             });
@@ -94,12 +94,12 @@ router.post('/', async (req, res) => {
         // Tạo booking mới
         const newBooking = new Booking({
             customerId: customerId,
-            fullname,
+            fullname: fullName,
             phone,
             email,
             services,
-            appointmentDate: new Date(appointmentDate),
-            appointmentTime,
+            bookingDate,
+            bookingTime,
             notes: notes || '',
             finalAmount: finalAmount || 0,
             status: 'pending',

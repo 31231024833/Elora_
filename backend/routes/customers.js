@@ -1,6 +1,7 @@
 import express from 'express';
 import Customer from '../models/Customer.js';
 import Booking from '../models/Booking.js';
+import Product from '../models/Product.js';
 // Bỏ authentication - tất cả API public
 
 const router = express.Router();
@@ -29,6 +30,7 @@ router.get('/', async (req, res) => {
     // Truy vấn khách hàng (không lấy password)
     const customers = await Customer.find(filter)
       .select('-password')
+      .where('isAdmin').ne(true) // Loại trừ admin
       .sort({ [sortBy]: sortOrder })
       .skip(skip)
       .limit(parseInt(limit));
@@ -54,7 +56,7 @@ router.get('/', async (req, res) => {
 // GET /customers/:id - Lấy chi tiết khách hàng theo id (không trả về password)
 router.get('/:id', async (req, res) => {
   try {
-    const customer = await Customer.findById(req.params.id).select('-password');
+    const customer = await Customer.findById(req.params.id).populate('favorites').select('-password');
 
     if (!customer) {
       return res.status(404).json({ error: 'Không tìm thấy khách hàng' });
@@ -340,6 +342,38 @@ router.get('/stats/overview', async (req, res) => {
   } catch (error) {
     console.error('Lỗi thống kê khách hàng:', error);
     res.status(500).json({ error: 'Lỗi server khi lấy thống kê khách hàng' });
+  }
+});
+
+// PATCH  /customers/:id/favorites - Thích/Bỏ thích sản phẩm
+router.post('/:id/favorites', async (req, res) => {
+  try {
+    const { customerId, productId } = req.body;
+
+    const customer = await Customer.findById(customerId);
+    if (!customer) {
+      return res.status(404).json({ error: 'Không tìm thấy khách hàng' });
+    }
+
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(404).json({ error: 'Không tìm thấy sản phẩm' });
+    }
+
+    const isFavorite = customer.favorites.includes(productId);
+
+    if (isFavorite) {
+      // Bỏ thích
+      await Customer.findByIdAndUpdate(customerId, { $pull: { favorites: productId } });
+      res.json({ message: 'Đã bỏ thích sản phẩm' });
+    } else {
+      // Thích
+      await Customer.findByIdAndUpdate(customerId, { $push: { favorites: productId } });
+      res.json({ message: 'Đã thích sản phẩm' });
+    }
+  } catch (error) {
+    console.error('Lỗi thay đổi trạng thái yêu thích:', error);
+    res.status(500).json({ error: 'Lỗi server khi thay đổi trạng thái yêu thích' });
   }
 });
 
