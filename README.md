@@ -58,10 +58,10 @@ Elora là website hỗ trợ khách hàng tra cứu dịch vụ làm đẹp, đ�
 - JavaScript
 
 ### Công cụ phát triển
-- Visual Studio 2022
+- Visual Studio Code 2022
 
 ### Triển khai
-- Hosting front-end: GitHub Pages
+- Hosting: Vercels
 
 ---
 
