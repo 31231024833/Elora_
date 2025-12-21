@@ -1,14 +1,11 @@
 import { API_BASE } from './config.js';
 // Khởi tạo quản lý thanh toán
 let checkoutManager;
+let checkoutData = {};
+let currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+let currentUserId = currentUser._id || null;
 
 function init() {
-    loadCheckoutData();
-    bindEvents();
-    setMinDate();
-    loadOrderSummary();
-    setupPaymentMethods();
-    
     // Khởi tạo AOS
     AOS.init({
         duration: 800,
@@ -16,11 +13,18 @@ function init() {
         once: true,
         mirror: false
     });
+    loadCheckoutData();
+    bindEvents();
+    setMinDate();
+    loadOrderSummary();
+    setupPaymentMethods();
+
+
 }
 
 function loadCheckoutData() {
     checkoutData = JSON.parse(localStorage.getItem('checkoutData') || '{}');
-    
+
     // Nếu không có dữ liệu, chuyển về giỏ hàng
     if (!checkoutData.items || checkoutData.items.length === 0) {
         showNotification('Không có sản phẩm trong giỏ hàng', 'warning');
@@ -63,7 +67,7 @@ function setMinDate() {
     const today = new Date();
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
-    
+
     const dateInput = document.getElementById('bookingDate');
     if (dateInput) {
         dateInput.min = tomorrow.toISOString().split('T')[0];
@@ -77,7 +81,7 @@ function loadOrderSummary() {
 
     // Hiển thị các mục trong khu vực chính
     renderCheckoutItems();
-    
+
     // Cập nhật tổng tiền trong sidebar
     const subtotalEl = document.getElementById('checkout-subtotal');
     const serviceFeeEl = document.getElementById('checkout-service-fee');
@@ -88,21 +92,21 @@ function loadOrderSummary() {
     // Cập nhật các tổng tiền
     subtotalEl.textContent = formatPrice(checkoutData.subtotal);
     serviceFeeEl.textContent = formatPrice(0);
-    
+
     if (checkoutData.discount > 0) {
         discountRow.style.display = 'flex';
         discountEl.textContent = '-' + formatPrice(checkoutData.discount);
     } else {
         discountRow.style.display = 'none';
     }
-    
+
     totalEl.textContent = formatPrice(checkoutData.total);
 }
 
 function renderCheckoutItems() {
     const container = document.getElementById('checkout-items-display');
     if (!container) return;
-    
+
     container.innerHTML = checkoutData.items.map(item => {
         // Kiểm tra nếu là booking item
         if (item.type === 'booking' && item.services && item.services.length > 0) {
@@ -112,7 +116,7 @@ function renderCheckoutItems() {
                 month: '2-digit',
                 year: 'numeric'
             });
-            
+
             return `
                 <div class="border border-gray-200 rounded-xl p-4 hover:shadow-md transition-shadow">
                     <div class="flex items-center gap-2 mb-3">
@@ -162,7 +166,7 @@ function renderCheckoutItems() {
                 </div>
             `;
         }
-        
+
         // Regular product item
         return `
             <div class="flex items-center gap-4 p-4 border border-gray-200 rounded-xl hover:shadow-md transition-shadow">
@@ -196,21 +200,21 @@ function getImageUrl(image) {
 function setupPaymentMethods() {
     // Handle payment method selection styling
     document.querySelectorAll('.payment-option').forEach(option => {
-        option.addEventListener('click', function() {
+        option.addEventListener('click', function () {
             // Remove active class from all options
             document.querySelectorAll('.payment-card').forEach(card => {
                 card.classList.remove('border-primary-300', 'bg-primary-50');
                 card.classList.add('border-gray-200');
             });
-            
+
             // Add active class to selected option
             const card = option.querySelector('.payment-card');
             card.classList.add('border-primary-300', 'bg-primary-50');
             card.classList.remove('border-gray-200');
-            
+
             // Check the radio button
             document.querySelector('input[type="radio"]').checked = false;
-            
+
             // Trigger change event
             handlePaymentMethodChange(document.querySelector('input[type="radio"]').value);
         });
@@ -222,7 +226,7 @@ function setupPaymentMethods() {
 
 function handlePaymentMethodChange(method) {
     const detailsContainer = document.getElementById('payment-details');
-    
+
     switch (method) {
         case 'transfer':
             detailsContainer.innerHTML = getBankTransferDetails();
@@ -348,26 +352,26 @@ function getEWalletDetails() {
 
 function formatPhoneNumber(input) {
     let value = input.value.replace(/\D/g, '');
-    
+
     // Limit to 10 digits
     if (value.length > 10) {
         value = value.substring(0, 10);
     }
-    
+
     // Format as XXX XXX XXXX
     if (value.length >= 6) {
         value = value.substring(0, 3) + ' ' + value.substring(3, 6) + ' ' + value.substring(6);
     } else if (value.length >= 3) {
         value = value.substring(0, 3) + ' ' + value.substring(3);
     }
-    
+
     input.value = value;
 }
 
 function validateEmail(input) {
     const email = input.value;
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    
+
     if (email && !emailRegex.test(email)) {
         input.setCustomValidity('Vui lòng nhập email hợp lệ');
         input.classList.add('border-red-500');
@@ -380,7 +384,8 @@ function validateEmail(input) {
 function loadUserData() {
     // Check if user is logged in
     const userData = JSON.parse(localStorage.getItem('user') || '{}');
-    
+    console.log("🚀 ~ loadUserData ~ userData:", userData)
+
     if (userData.firstName && userData.lastName) {
         document.getElementById('fullName').value = `${userData.firstName} ${userData.lastName}`;
     }
@@ -395,7 +400,7 @@ function loadUserData() {
 function validateForm() {
     const requiredFields = [
         'fullName',
-        'phone', 
+        'phone',
         'email',
     ];
 
@@ -450,33 +455,42 @@ async function processOrder() {
 
     // Show loading
     document.querySelector('.loading-modal').classList.remove('hidden');
-    
+    console.log("🚀 ~ processOrder ~ checkoutData:", checkoutData)
+    currentUserId
+    console.log("🚀 ~ processOrder ~ currentUserId:", currentUserId)
     try {
         // Collect form data
         const formData = new FormData(document.getElementById('checkout-form'));
         const orderData = {
             // Customer info
+            customerId: currentUserId,
             fullName: formData.get('fullName'),
             phone: formData.get('phone').replace(/\s/g, ''),
             email: formData.get('email'),
             notes: formData.get('notes'),
-            
+
             // Booking info
-            bookingDate: formData.get('bookingDate'),
-            bookingTime: formData.get('bookingTime'),
+            bookingDate: checkoutData.bookingDate,
+            bookingTime: checkoutData.bookingTime,
             staff: formData.get('staff'),
-            
+
             // Payment info
             paymentMethod: formData.get('paymentMethod'),
-            
+
             // Order details
-            items: checkoutData.items,
+            services: checkoutData.items.map(item => {
+                const services = item.services || [];
+                return services.map(service => ({
+                    product: service.id,
+                    price: service.price
+                }));
+            }).flat(),
             subtotal: checkoutData.subtotal,
             serviceFee: checkoutData.serviceFee,
             discount: checkoutData.discount || 0,
-            total: checkoutData.total,
+            finalAmount: checkoutData.total,
             appliedPromo: checkoutData.appliedPromo,
-            
+
             // Additional info
             newsletter: formData.get('newsletter') === 'on',
             createdAt: new Date().toISOString(),
@@ -485,23 +499,23 @@ async function processOrder() {
 
         // Simulate API call
         await submitOrder(orderData);
-        
+
         // Save order to localStorage for confirmation page
         localStorage.setItem('lastOrder', JSON.stringify(orderData));
-        
+
         // Clear cart and checkout data
         const newCart = JSON.parse(localStorage.getItem('cart') || '[]').filter(cartItem => {
             return !checkoutData.items.some(checkedOutItem => checkedOutItem.id === cartItem.id);
         });
         localStorage.setItem('cart', JSON.stringify(newCart));
         localStorage.removeItem('checkoutData');
-        
+
         // Hide loading
         document.querySelector('.loading-modal').classList.add('hidden');
-        
+
         // Redirect to success page
         window.location.href = 'order-success.html';
-        
+
     } catch (error) {
         console.error('Order submission error:', error);
         document.querySelector('.loading-modal').classList.add('hidden');
@@ -510,17 +524,25 @@ async function processOrder() {
 }
 
 async function submitOrder(orderData) {
-    console.log("🚀 ~ submitOrder ~ orderData:", orderData)
-    
-    return new Promise((resolve, reject) => {
-        setTimeout(() => {
-            // Simulate success (95% success rate)
-            if (Math.random() < 0.95) {
-                resolve(orderData);
-            } else {
-                reject(new Error('Network error'));
-            }
-        }, 2000);
+    await fetch(`${API_BASE}/bookings`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(orderData)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network error');
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log("Order submitted successfully:", data);
+    })
+    .catch(error => {
+        console.error("Error submitting order:", error);
+        throw error;
     });
 }
 
@@ -537,7 +559,7 @@ function formatPrice(price) {
     }).format(price).replace('₫', 'đ');
 }
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     init();
     // Update cart count in header
     updateCartCount();
@@ -547,7 +569,7 @@ document.addEventListener('DOMContentLoaded', function() {
 function updateCartCount() {
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
     const totalItems = cart.length;
-    
+
     const cartCountElements = document.querySelectorAll('.cart-count');
     cartCountElements.forEach(element => {
         element.textContent = totalItems;
@@ -557,32 +579,30 @@ function updateCartCount() {
 function showNotification(message, type = 'info') {
     // Create notification element
     const notification = document.createElement('div');
-    notification.className = `fixed top-24 right-4 z-50 px-6 py-4 rounded-lg shadow-lg max-w-sm transform translate-x-full transition-transform duration-300 ${
-        type === 'success' ? 'bg-green-500 text-white' :
-        type === 'error' ? 'bg-red-500 text-white' :
-        type === 'warning' ? 'bg-yellow-500 text-black' :
-        'bg-blue-500 text-white'
-    }`;
-    
+    notification.className = `fixed top-24 right-4 z-50 px-6 py-4 rounded-lg shadow-lg max-w-sm transform translate-x-full transition-transform duration-300 ${type === 'success' ? 'bg-green-500 text-white' :
+            type === 'error' ? 'bg-red-500 text-white' :
+                type === 'warning' ? 'bg-yellow-500 text-black' :
+                    'bg-blue-500 text-white'
+        }`;
+
     notification.innerHTML = `
         <div class="flex items-center space-x-3">
-            <i class="fas fa-${
-                type === 'success' ? 'check-circle' :
-                type === 'error' ? 'exclamation-circle' :
+            <i class="fas fa-${type === 'success' ? 'check-circle' :
+            type === 'error' ? 'exclamation-circle' :
                 type === 'warning' ? 'exclamation-triangle' :
-                'info-circle'
-            }"></i>
+                    'info-circle'
+        }"></i>
             <span>${message}</span>
         </div>
     `;
-    
+
     document.body.appendChild(notification);
-    
+
     // Animate in
     setTimeout(() => {
         notification.style.transform = 'translateX(0)';
     }, 100);
-    
+
     // Auto remove
     setTimeout(() => {
         notification.style.transform = 'translateX(100%)';

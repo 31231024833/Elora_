@@ -6,6 +6,7 @@ import { getCurrentUser, isAuthenticated, requireAuth } from './auth-helper.js';
 let currentUser = null;
 let isEditMode = false;
 let originalFormData = {};
+let products = [];
 
 // Khởi tạo trang
 document.addEventListener('DOMContentLoaded', async function () {
@@ -32,7 +33,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     // Load dữ liệu
     await loadUserProfile();
-    loadFavorites();
+    await loadFavorites();
     loadRecentlyViewed();
     loadBookings();
 
@@ -193,9 +194,14 @@ async function handleProfileUpdate(e) {
 }
 
 // Load danh sách yêu thích
-function loadFavorites() {
+async function loadFavorites() {
     const favoritesList = document.getElementById('favorites-list');
-    const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+    products = (await fetch(`${API_BASE}/products`).then(res => res.json() || [])).data || [];
+
+    const favorites = products.filter(product => {
+        const fav = currentUser.favorites;
+        return fav.includes(product._id);
+    });
 
     if (favorites.length === 0) {
         favoritesList.innerHTML = `
@@ -211,10 +217,12 @@ function loadFavorites() {
     }
 
     // Render danh sách yêu thích
-    favoritesList.innerHTML = favorites.map(service => `
+    favoritesList.innerHTML = favorites.map(service => {
+        const image = service.images && service.images.length > 0 ? service.images[0]?.gridfsId : null;
+        return `
         <div class="border border-gray-200 rounded-xl p-4 hover:shadow-lg transition-all">
             <div class="flex items-start space-x-4">
-                <img src="${service.image || 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=100&h=100&fit=crop'}" 
+                <img src="${image ? `${API_BASE}/files/${image}` : 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=100&h=100&fit=crop'}" 
                     alt="${service.name}" class="w-20 h-20 object-cover rounded-lg">
                 <div class="flex-1">
                     <h3 class="font-semibold text-gray-800 mb-1">${service.name}</h3>
@@ -230,13 +238,14 @@ function loadFavorites() {
                 </div>
             </div>
         </div>
-    `).join('');
+    `;
+    }).join('');
 }
 
 // Load danh sách đã xem
 function loadRecentlyViewed() {
     const viewedList = document.getElementById('viewed-list');
-    const viewed = JSON.parse(localStorage.getItem('recentlyViewed') || '[]');
+    const viewed = products;
 
     if (viewed.length === 0) {
         viewedList.innerHTML = `
@@ -252,10 +261,12 @@ function loadRecentlyViewed() {
     }
 
     // Render danh sách đã xem (giới hạn 10 items mới nhất)
-    viewedList.innerHTML = viewed.slice(0, 10).map(service => `
+    viewedList.innerHTML = viewed.slice(0, 10).map(service => {
+        const image = service.images && service.images.length > 0 ? service.images[0]?.gridfsId : null;
+        return `
         <div class="border border-gray-200 rounded-xl p-4 hover:shadow-lg transition-all">
             <div class="flex items-start space-x-4">
-                <img src="${service.image || 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=100&h=100&fit=crop'}" 
+                <img src="${image ? `${API_BASE}/files/${image}` : 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=100&h=100&fit=crop'}" 
                     alt="${service.name}" class="w-20 h-20 object-cover rounded-lg">
                 <div class="flex-1">
                     <h3 class="font-semibold text-gray-800 mb-1">${service.name}</h3>
@@ -269,7 +280,8 @@ function loadRecentlyViewed() {
                 </div>
             </div>
         </div>
-    `).join('');
+    `;
+    }).join('');
 }
 
 // Load danh sách lịch đặt

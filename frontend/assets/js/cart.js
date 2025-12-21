@@ -122,6 +122,7 @@ async function loadBookings() {
 
         const data = await response.json();
         const bookingsResponse = data.bookings || [];
+        console.log("🚀 ~ loadBookings ~ bookingsResponse:", bookingsResponse)
         // Group bookings by status
         bookings = {
             pending: bookingsResponse.filter(b => b.status === 'pending'),
@@ -1006,6 +1007,8 @@ function proceedToCheckout() {
 
     // Save checkout data với selected items
     const checkoutData = {
+        bookingDate: new Date().toISOString(),
+        bookingTime: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
         items: selectedCart,
         subtotal: selectedCart.reduce((total, item) => {
             if (item.type === 'booking' && item.totalAmount) {

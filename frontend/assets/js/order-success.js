@@ -1,3 +1,6 @@
+import { API_BASE } from './config.js';
+let orderData = {};
+
 function init() {
     // Khởi tạo AOS
     AOS.init({
@@ -44,8 +47,9 @@ function displayOrderInfo() {
     document.getElementById('customer-email').textContent = orderData.email;
 
     // Thông tin đặt lịch
-    document.getElementById('booking-date').textContent = formatDate(new Date(orderData.bookingDate));
-    document.getElementById('booking-time').textContent = formatBookingTime(orderData.bookingTime);
+    document.getElementById('booking-date').textContent = formatDate(new Date(orderData.appointmentDate));
+    console.log("🚀 ~ displayOrderInfo ~ orderData:", orderData)
+    document.getElementById('booking-time').textContent = formatBookingTime(orderData.appointmentTime);
     
     if (orderData.staff) {
         document.getElementById('booking-staff').textContent = getStaffName(orderData.staff);
@@ -58,21 +62,25 @@ function displayOrderInfo() {
 function displayServices() {
     const container = document.getElementById('ordered-services');
     if (!container || !orderData.items) return;
+    const services = orderData.items.map(item => item.services).flat();
 
-    container.innerHTML = orderData.items.map(item => `
+    container.innerHTML = services.map(service => {
+        console.log("🚀 ~ displayServices ~ service:", service)
+        return `
         <div class="flex items-center justify-between py-2">
             <div class="flex items-center space-x-3">
-                <img src="${item.image || 'https://via.placeholder.com/40x40/f472b6/ffffff?text=Spa'}" 
-                     alt="${item.name}" 
+                <img src="${service?.image ? `${API_BASE}/files/${service.image}` : 'https://via.placeholder.com/40x40/f472b6/ffffff?text=Spa'}" 
+                     alt="${service.name}" 
                      class="w-10 h-10 rounded-lg object-cover">
                 <div>
-                    <h4 class="font-medium text-gray-800 text-sm">${item.name}</h4>
-                    <p class="text-xs text-gray-500">Số lượng: ${item.quantity}</p>
+                    <h4 class="font-medium text-gray-800 text-sm">${service.name}</h4>
+                    <p class="text-xs text-gray-500">Số lượng: 1</p>
                 </div>
             </div>
-            <span class="font-semibold text-primary-300">${formatPrice(item.price * item.quantity)}</span>
+            <span class="font-semibold text-primary-300">${formatPrice(service.price)}</span>
         </div>
-    `).join('');
+    `;
+    }).join('');
 }
 
 function getPaymentMethodText(method) {

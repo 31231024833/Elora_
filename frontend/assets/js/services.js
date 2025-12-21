@@ -18,12 +18,7 @@ let activeFilters = {
 
 // Khởi tạo trang dịch vụ
 document.addEventListener('DOMContentLoaded', function () {
-    if (typeof SpaApp !== 'undefined') {
-        initializeServicesPage();
-    } else {
-        // Chờ main.js tải xong
-        setTimeout(initializeServicesPage, 500);
-    }
+    initializeServicesPage();
 });
 
 async function initializeServicesPage() {
@@ -209,13 +204,13 @@ function loadSampleServicesData() {
 
 function renderCategoryFilters() {
     const container = document.getElementById('category-filters');
-    if (!container || !window.SpaApp?.products) return;
+    if (!container || !products) return;
 
     // Get unique categories
-    const categories = [...new Set(window.SpaApp.products.map(p => p.category))].filter(Boolean);
+    const categories = [...new Set(products.map(p => p.category))].filter(Boolean);
 
     const filtersHTML = categories.map(category => {
-        const count = window.SpaApp.products.filter(p => p.category === category).length;
+        const count = products.filter(p => p.category === category).length;
         return `
             <label class="filter-option">
                 <input type="checkbox" class="filter-checkbox category-filter" value="${category}" 
@@ -392,15 +387,19 @@ function applyFilters() {
 
     // Apply special filters
     if (activeFilters.special.length > 0) {
+        console.log("🚀 ~ applyFilters ~ products:", products)
+        const top10TrendingProducts = products?.sort((a, b) => (b.boughtQuantity || 0) - (a.boughtQuantity || 0)).slice(0, 10);
+        const top10BestSellerProducts = products?.sort((a, b) => (b.ratingCount || 0) - (a.ratingCount || 0)).slice(0, 10);
         filtered = filtered.filter(product => {
+            console.log("🚀 ~ applyFilters ~ product:", product)
             return activeFilters.special.some(special => {
                 switch (special) {
                     case 'discount':
                         return product.originalPrice && product.price < product.originalPrice;
                     case 'trending':
-                        return product.trending;
+                        return top10TrendingProducts?.includes(product);
                     case 'bestseller':
-                        return product.bestseller;
+                        return top10BestSellerProducts?.includes(product);
                     case 'featured':
                         return product.featured;
                     default:

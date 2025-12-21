@@ -7,6 +7,7 @@ let wishlistItems = [];
 let products = [];
 let categories = [];
 let banners = [];
+let currentUser = null;
 
 // Cấu hình đường dẫn API
 import { API_BASE } from './config.js';
@@ -43,6 +44,8 @@ async function initializeApp() {
         // Tải dữ liệu từ API
         await loadData();
 
+        currentUser = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null;
+        
         // Khởi tạo các thành phần giao diện
         initializeSliders();
         initializeEventListeners();
@@ -55,6 +58,7 @@ async function initializeApp() {
 
         // Cập nhật số lượng giỏ hàng
         updateCartDisplay();
+
 
     } catch (error) {
         console.error('Error initializing app:', error);
@@ -75,7 +79,7 @@ async function loadData() {
             throw new Error('Failed to fetch data from API');
         }
 
-        products = await productsRes.json();
+        products = (await productsRes.json())?.data;
         categories = await categoriesRes.json();
         banners = await bannersRes.json();
 
@@ -218,12 +222,11 @@ function renderHeroSlider() {
                     <h1 class="text-2xl lg:text-4xl font-display font-bold mb-4 animate-slide-up">
                         ${banner.title}
                     </h1>
-                    ${
-                        banner.subtitle ?
-                        `<p class="text-xl lg:text-2xl font-light mb-6 animate-slide-up" style="animation-delay: 0.2s">
+                    ${banner.subtitle ?
+                `<p class="text-xl lg:text-2xl font-light mb-6 animate-slide-up" style="animation-delay: 0.2s">
                             ${banner.subtitle}
                         </p>` : ''
-                    }
+            }
                     <p class="text-lg mb-8 opacity-90 animate-slide-up" style="animation-delay: 0.4s">
                         ${banner.description}
                     </p>
@@ -259,7 +262,7 @@ function renderProducts() {
 function renderTrendingProducts() {
     const container = document.getElementById('trending-products');
 
-    const trendingProducts = Array.from(products.data).sort((a, b) => b.trending - a.trending).slice(0, 6);
+    const trendingProducts = Array.from(products).sort((a, b) => b.trending - a.trending).slice(0, 6);
     container.innerHTML = trendingProducts.map(product => createProductCard(product, 'trending')).join('');
 
     // Thêm sự kiện cho sản phẩm
@@ -271,7 +274,7 @@ function renderBestsellerProducts() {
     const container = document.getElementById('bestseller-products');
     if (!container) return;
 
-    const bestsellerProducts = Array.from(products.data).sort((a, b) => b.boughtCount - a.boughtCount).slice(0, 6);
+    const bestsellerProducts = Array.from(products).sort((a, b) => b.boughtCount - a.boughtCount).slice(0, 6);
     container.innerHTML = bestsellerProducts.map(product => createProductCard(product, 'bestseller')).join('');
 
     // Thêm sự kiện cho sản phẩm
@@ -282,7 +285,8 @@ function renderBestsellerProducts() {
 function createProductCard(product, badgeType = '') {
     const discountPercent = product.originalPrice ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100) : 0;
     const thumbnail = product?.images?.length ? `${API_BASE}${product.images[0].url.substring(4)}` : product.image;
-
+    currentUser?.favorites?.includes(product._id)
+    
     return `
         <div class="product-card lg:min-w-[400px] min-w-full" data-product-id="${product._id}" data-aos="fade-up">
             <div class="product-image">
@@ -292,8 +296,8 @@ function createProductCard(product, badgeType = '') {
                     ${discountPercent > 0 ? `<span class="product-badge discount">-${discountPercent}%</span>` : ''}
                 </div>
                 <div class="product-actions flex space-x-2 mt-2">
-                    <button class="product-action-btn wishlist-btn" title="Thêm vào yêu thích">
-                        <i class="fas fa-heart"></i>
+                    <button class="product-action-btn wishlist-btn" data-product-id="${product._id}" title="Thêm vào yêu thích">
+                        <i class="${currentUser?.favorites?.includes(product._id) ? "fas fa-heart text-primary-500" : "far fa-heart text-gray-700"}"></i>
                     </button>
                     <button class="product-action-btn quick-view-btn" title="Xem nhanh">
                         <i class="fas fa-eye"></i>
@@ -341,6 +345,48 @@ function createProductCard(product, badgeType = '') {
     `;
 }
 
+async function likeProduct(productId) {
+    const customerId = currentUser?._id;
+    if (!customerId) {
+        showNotification('Vui lòng đăng nhập để thích sản phẩm', 'error');
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/customers/${customerId}/favorites`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                customerId,
+                productId
+            })
+        });
+
+        const result = await response.json();
+        if (response.ok) {
+            showNotification(result.message, 'success');
+            // cập nhật trong localstorage
+            currentUser.favorites = currentUser.favorites || [];
+            if (currentUser.favorites.includes(productId)) {
+                currentUser.favorites = currentUser.favorites.filter(id => id !== productId);
+            } else {
+                currentUser.favorites.push(productId);
+            }
+            localStorage.setItem('user', JSON.stringify(currentUser));
+
+            // Cập nhật trạng thái nút yêu thích
+            updateWishlistButton(productId);
+        } else {
+            showNotification(result.error || 'Lỗi khi thích sản phẩm', 'error');
+        }
+    } catch (error) {
+        console.error('Lỗi khi thích sản phẩm:', error);
+        showNotification('Lỗi mạng khi thích sản phẩm', 'error');
+    }
+}
+
 // Tạo HTML cho đánh giá sao
 function generateStarRating(rating) {
     const fullStars = Math.floor(rating);
@@ -374,7 +420,8 @@ function addProductEventListeners(container) {
         btn.addEventListener('click', function (e) {
             e.preventDefault();
             e.stopPropagation();
-            const productId = parseInt(this.dataset.productId);
+            const productId = this.dataset.productId;
+            console.log("🚀 ~ addProductEventListeners ~ this.dataset:", this.dataset)
             addToCart(productId);
         });
     });
@@ -384,8 +431,9 @@ function addProductEventListeners(container) {
         btn.addEventListener('click', function (e) {
             e.preventDefault();
             e.stopPropagation();
-            const productId = parseInt(this.dataset.productId);
-            toggleWishlist(productId);
+            const productId = this.dataset.productId;
+            console.log("🚀 ~ addProductEventListeners ~ this.dataset:", this.dataset)
+            likeProduct(productId);
         });
     });
 
@@ -432,38 +480,12 @@ function addToCart(productId, quantity = 1) {
     }
 }
 
-// Bật/tắt yêu thích
-function toggleWishlist(productId) {
-    const product = products.find(p => p.id === productId);
-    if (!product) return;
-
-    const index = wishlistItems.findIndex(item => item.id === productId);
-
-    if (index > -1) {
-        wishlistItems.splice(index, 1);
-        showNotification(`${product.name} đã được xóa khỏi danh sách yêu thích`, 'info');
-    } else {
-        wishlistItems.push({
-            id: product.id,
-            name: product.name,
-            price: product.price,
-            image: product.image,
-            addedAt: new Date().toISOString()
-        });
-        showNotification(`${product.name} đã được thêm vào danh sách yêu thích`, 'success');
-    }
-
-    saveWishlist();
-    updateWishlistButton(productId);
-}
-
 // Cập nhật trạng thái nút yêu thích
 function updateWishlistButton(productId) {
     const btn = document.querySelector(`[data-product-id="${productId}"] .wishlist-btn`);
     if (btn) {
-        const isInWishlist = wishlistItems.some(item => item.id === productId);
-        btn.classList.toggle('text-primary-300', isInWishlist);
-        btn.classList.toggle('text-gray-400', !isInWishlist);
+        const isInWishlist = currentUser?.favorites?.includes(productId);
+        btn.innerHTML = `<i class="${isInWishlist ? "fas fa-heart text-primary-500" : "far fa-heart text-gray-700"}"></i>`;
     }
 }
 
