@@ -16,6 +16,16 @@ let activeFilters = {
     search: ''
 };
 
+function translateToEnglish(str) {
+    const from = "àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ";
+    const to   = "aaaaaaaaaaaaaaaaaeeeeeeeeeeeiiiiiooooooooooooooooouuuuuuuuuuuyyyyyd";
+    let result = str;
+    for (let i = 0; i < from.length; i++) {
+        result = result.replace(new RegExp(from[i], 'g'), to[i]);
+    }
+    return result;
+}
+
 // Khởi tạo trang dịch vụ
 document.addEventListener('DOMContentLoaded', function () {
     initializeServicesPage();
@@ -333,10 +343,12 @@ function applyFilters() {
 
     // Apply search filter
     if (activeFilters.search) {
-        filtered = filtered.filter(product =>
-            product.name.toLowerCase().includes(activeFilters.search) ||
-            product.description?.toLowerCase().includes(activeFilters.search) ||
-            product.tags?.some(tag => tag.toLowerCase().includes(activeFilters.search))
+        filtered = filtered.filter(product => {
+            console.log("🚀 ~ applyFilters ~ product.name.toLowerCase():", product.name.toLowerCase())
+            return translateToEnglish(product.name.toLowerCase()).includes(translateToEnglish(activeFilters.search)) ||
+            translateToEnglish(product.description?.toLowerCase()).includes(translateToEnglish(activeFilters.search)) ||
+            product.tags?.some(tag => tag.toLowerCase().includes(activeFilters.search));
+        }
         );
     }
 

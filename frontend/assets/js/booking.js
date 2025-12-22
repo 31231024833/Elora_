@@ -16,8 +16,10 @@ AOS.init({
     offset: 100
 });
 
+const appliedPromo = false
+
 // Khởi tạo ứng dụng
-document.addEventListener('DOMContentLoaded', async function() {
+document.addEventListener('DOMContentLoaded', async function () {
     await initializeBooking();
 });
 
@@ -25,20 +27,20 @@ async function initializeBooking() {
     try {
         // Kiểm tra xác thực
         currentUser = getCurrentUser();
-        
+
         // Tải danh sách dịch vụ từ API
         await loadServices();
-        
+
         // Đặt ngày tối thiểu là hôm nay
         const dateInput = document.getElementById('bookingDate');
         if (dateInput) {
             dateInput.min = new Date().toISOString().split('T')[0];
         }
-        
+
         // Kiểm tra URL parameters cho dịch vụ được chọn trước
         const urlParams = new URLSearchParams(window.location.search);
         const serviceId = urlParams.get('id');
-        
+
         if (serviceId && services[serviceId]) {
             // Chọn trước dịch vụ từ URL
             const serviceSelect = document.getElementById('service');
@@ -49,33 +51,109 @@ async function initializeBooking() {
                 renderSelectedServices();
             }
         }
-        
+
         // Điền trước thông tin người dùng nếu đã đăng nhập
         if (currentUser) {
             prefillUserInfo();
         }
-        
+
         // Thiết lập event listeners
         setupEventListeners();
-        
+
     } catch (error) {
         console.error('Error initializing booking:', error);
         showError('Không thể tải thông tin đặt lịch. Vui lòng thử lại sau.');
     }
 }
 
+function calculateDiscount() {
+    if (!appliedPromo) return 0;
+
+    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    const subtotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+
+    if (appliedPromo.type === 'percent') {
+        return subtotal * (appliedPromo.discount / 100);
+    } else {
+        return appliedPromo.discount;
+    }
+}
+
+function calculateTotal() {
+    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    const subtotal = cart.reduce((total, item) => selectedItems.includes(item.id.toString()) ? total + item.totalAmount : total, 0);
+    const discount = calculateDiscount();
+    return Math.max(0, subtotal - discount);
+}
+
+
+function bookingNow() {
+    const selectItemId = Date.now().toString()
+    const form = document.getElementById('booking-form');
+    if (!form) return;
+
+    const formData = new FormData(form);
+    const bookingData = {
+        fullname: formData.get('fullName'),
+        email: formData.get('email'),
+        phone: formData.get('phone'),
+        appointmentDate: formData.get('bookingDate'),
+        appointmentTime: formData.get('bookingTime'),
+        notes: formData.get('specialRequests') || '',
+        services: selectedServices
+    };
+    console.log("🚀 ~ bookingNow ~ bookingData:", bookingData)
+
+    addBookingToCart(bookingData, selectItemId);
+
+    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+
+    if (cart.length === 0) {
+        showNotification('Giỏ hàng trống. Vui lòng thêm sản phẩm!', 'warning');
+        return;
+    }
+
+    // Chỉ lấy các items đã được chọn
+    const selectedCart = cart.filter(item => {
+        console.log("🚀 ~ bookingNow ~ item:", item)
+        return item.id === selectItemId;
+    });
+    console.log("🚀 ~ bookingNow ~ selectedCart:", selectedCart)
+
+    // Save checkout data với selected items
+    const checkoutData = {
+        bookingDate: new Date().toISOString(),
+        bookingTime: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+        items: selectedCart,
+        subtotal: selectedCart.reduce((total, item) => {
+            if (item.type === 'booking' && item.totalAmount) {
+                return total + item.totalAmount;
+            }
+            return total + (item.price * item.quantity);
+        }, 0),
+        appliedPromo: false,
+        discount: calculateDiscount(),
+        total: calculateTotal()
+    };
+
+    localStorage.setItem('checkoutData', JSON.stringify(checkoutData));
+
+    // Redirect to checkout
+    window.location.href = 'checkout.html';
+}
+
 // Tải danh sách dịch vụ từ API
 async function loadServices() {
     try {
         const response = await fetch(`${API_BASE}/products`);
-        
+
         if (!response.ok) {
             throw new Error('Không thể tải danh sách dịch vụ');
         }
-        
+
         const data = await response.json();
         const servicesList = data.data || data;
-        
+
         // Chuyển đổi sang object services
         services = {};
         servicesList.forEach(product => {
@@ -90,7 +168,7 @@ async function loadServices() {
                 image: product.images?.[0]?.gridfsId || 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=300&h=200&fit=crop'
             };
         });
-        
+
         // Cập nhật dropdown danh sách dịch vụ
         updateServiceDropdown();
     } catch (error) {
@@ -106,12 +184,12 @@ async function loadServices() {
 function updateServiceDropdown() {
     const serviceSelect = document.getElementById('service');
     if (!serviceSelect) return;
-    
+
     // Clear existing options except the first one
     while (serviceSelect.options.length > 1) {
         serviceSelect.remove(1);
     }
-    
+
     // Add services as options
     Object.entries(services).forEach(([key, service]) => {
         const option = document.createElement('option');
@@ -124,11 +202,11 @@ function updateServiceDropdown() {
 // Pre-fill user info if logged in
 function prefillUserInfo() {
     if (!currentUser) return;
-    
+
     const fullNameInput = document.getElementById('fullName');
     const emailInput = document.getElementById('email');
     const phoneInput = document.getElementById('phone');
-    
+
     if (fullNameInput && currentUser.name) {
         fullNameInput.value = currentUser.name;
     }
@@ -153,33 +231,36 @@ function setupEventListeners() {
     // Service selection handler
     const serviceSelect = document.getElementById('service');
     if (serviceSelect) {
-        serviceSelect.addEventListener('change', function() {
+        serviceSelect.addEventListener('change', function () {
             updateServiceInfo(this.value);
         });
     }
-    
+
     // Add service button
     const addServiceBtn = document.getElementById('add-service-btn');
     if (addServiceBtn) {
         addServiceBtn.addEventListener('click', addSelectedService);
     }
-    
+
     // Add to cart button
     const addToCartBtn = document.getElementById('add-to-cart-btn');
     if (addToCartBtn) {
         addToCartBtn.addEventListener('click', handleAddToCart);
     }
-    
+
     // Form submission
     const bookingForm = document.getElementById('booking-form');
     if (bookingForm) {
-        bookingForm.addEventListener('submit', handleFormSubmit);
+        bookingForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            bookingNow()
+        });
     }
-    
+
     // Modal close handlers
     const modal = document.getElementById('success-modal');
     if (modal) {
-        modal.addEventListener('click', function(e) {
+        modal.addEventListener('click', function (e) {
             if (e.target === this) {
                 closeModal();
             }
@@ -191,18 +272,18 @@ function setupEventListeners() {
 function addSelectedService() {
     const serviceSelect = document.getElementById('service');
     const serviceId = serviceSelect.value;
-    
+
     if (!serviceId) {
         showError('Vui lòng chọn dịch vụ');
         return;
     }
-    
+
     // Kiểm tra dịch vụ đã được chọn chưa
     if (selectedServices.find(s => s.id === serviceId)) {
         showError('Dịch vụ này đã được chọn');
         return;
     }
-    
+
     const service = services[serviceId];
     if (service) {
         selectedServices.push(service);
@@ -222,19 +303,19 @@ function removeSelectedService(serviceId) {
 function renderSelectedServices() {
     const container = document.getElementById('selected-services');
     const noServicesMsg = document.getElementById('no-services-msg');
-    
+
     if (!container || !noServicesMsg) return;
-    
+
     if (selectedServices.length === 0) {
         container.classList.add('hidden');
         noServicesMsg.classList.remove('hidden');
         updateServiceInfo(null);
         return;
     }
-    
+
     container.classList.remove('hidden');
     noServicesMsg.classList.add('hidden');
-    
+
     container.innerHTML = selectedServices.map(service => `
         <div class="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-xl hover:shadow-md transition-shadow">
             <img src="${API_BASE}/files/${service.image}" 
@@ -252,7 +333,7 @@ function renderSelectedServices() {
             </button>
         </div>
     `).join('');
-    
+
     // Cập nhật thông tin tổng hợp
     updateServicesSummary();
 }
@@ -261,7 +342,7 @@ function renderSelectedServices() {
 function updateServicesSummary() {
     const serviceInfo = document.getElementById('service-info');
     if (!serviceInfo) return;
-    
+
     if (selectedServices.length === 0) {
         serviceInfo.innerHTML = `
             <div class="text-center py-8">
@@ -271,9 +352,9 @@ function updateServicesSummary() {
         `;
         return;
     }
-    
+
     const totalPrice = selectedServices.reduce((sum, s) => sum + s.priceValue, 0);
-    
+
     serviceInfo.innerHTML = `
         <div class="space-y-4">
             <div class="text-center pb-4 border-b border-gray-200">
@@ -348,7 +429,7 @@ function updateServiceInfo(serviceId) {
 function handleAddToCart() {
     const form = document.getElementById('booking-form');
     if (!form) return;
-    
+
     const formData = new FormData(form);
     const bookingData = {
         fullname: formData.get('fullName'),
@@ -359,18 +440,18 @@ function handleAddToCart() {
         notes: formData.get('specialRequests') || '',
         services: selectedServices
     };
-    
+
     // Validate basic info
     if (!validateBookingForCart(bookingData)) {
         return;
     }
-    
+
     // Add to cart (localStorage)
     addBookingToCart(bookingData);
-    
+
     // Show success message
     showNotification('Đã thêm vào giỏ hàng thành công!', 'success');
-    
+
     // Reset form
     form.reset();
     selectedServices = [];
@@ -384,32 +465,32 @@ function validateBookingForCart(data) {
         showError('Vui lòng chọn ít nhất một dịch vụ');
         return false;
     }
-    
+
     if (!data.appointmentDate || !data.appointmentTime) {
         showError('Vui lòng chọn ngày và giờ hẹn');
         return false;
     }
-    
+
     // Validate date is not in the past
     const selectedDate = new Date(data.appointmentDate);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     if (selectedDate < today) {
         showError('Ngày hẹn không được trong quá khứ');
         return false;
     }
-    
+
     return true;
 }
 
 // Thêm booking vào giỏ hàng trong localStorage
-function addBookingToCart(bookingData) {
+function addBookingToCart(bookingData, itemId) {
     let cart = JSON.parse(localStorage.getItem('cart') || '[]');
-    
+
     // Tạo cart item với format phù hợp
     const cartItem = {
-        id: Date.now().toString(), // Unique ID cho cart item
+        id: itemId ? itemId : Date.now().toString(), // Unique ID cho cart item
         type: 'booking',
         appointmentDate: bookingData.appointmentDate,
         appointmentTime: bookingData.appointmentTime,
@@ -426,10 +507,10 @@ function addBookingToCart(bookingData) {
         email: bookingData.email || '',
         phone: bookingData.phone || ''
     };
-    
+
     cart.push(cartItem);
     localStorage.setItem('cart', JSON.stringify(cart));
-    
+
     // Update cart count if function exists
     if (typeof updateCartCount === 'function') {
         updateCartCount();
@@ -441,7 +522,7 @@ function showNotification(message, type = 'info') {
     // Tạo notification element
     const notification = document.createElement('div');
     notification.className = `fixed top-24 right-6 z-50 px-6 py-4 rounded-xl shadow-2xl transform transition-all duration-300 translate-x-full`;
-    
+
     if (type === 'success') {
         notification.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
         notification.innerHTML = `
@@ -467,15 +548,15 @@ function showNotification(message, type = 'info') {
             </div>
         `;
     }
-    
+
     document.body.appendChild(notification);
-    
+
     // Animate in
     setTimeout(() => {
         notification.classList.remove('translate-x-full');
         notification.classList.add('translate-x-0');
     }, 10);
-    
+
     // Auto remove after 3 seconds
     setTimeout(() => {
         notification.classList.remove('translate-x-0');
@@ -487,15 +568,15 @@ function showNotification(message, type = 'info') {
 // Handle form submission
 async function handleFormSubmit(e) {
     e.preventDefault();
-    
+
     const submitBtn = this.querySelector('button[type="submit"]');
     const originalBtnText = submitBtn.innerHTML;
-    
+
     try {
         // Show loading state
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Đang xử lý...';
         submitBtn.disabled = true;
-        
+
         // Get form data
         const formData = new FormData(this);
         const bookingData = {
@@ -512,38 +593,38 @@ async function handleFormSubmit(e) {
         if (!validateBooking(bookingData)) {
             throw new Error('Vui lòng điền đầy đủ thông tin');
         }
-        
+
         // Check if user is logged in
         if (!currentUser) {
             // Save booking data to localStorage for after login
             localStorage.setItem('pendingBooking', JSON.stringify(bookingData));
-            
+
             // Redirect to login with return URL
             if (confirm('Bạn cần đăng nhập để đặt lịch. Chuyển đến trang đăng nhập?')) {
                 window.location.href = `login.html?redirect=booking.html${window.location.search}`;
             }
             return;
         }
-        
+
         // Submit booking to API
         const result = await submitBooking(bookingData);
-        
+
         if (result.success) {
             // Show success modal
             showSuccessModal(result.booking);
-            
+
             // Reset form
             this.reset();
             selectedServices = []; // Clear selected services
             renderSelectedServices();
             updateServiceInfo(null);
-            
+
             // Clear pending booking
             localStorage.removeItem('pendingBooking');
         } else {
             throw new Error(result.message || 'Đặt lịch thất bại');
         }
-        
+
     } catch (error) {
         console.error('Booking error:', error);
         showError(error.message || 'Có lỗi xảy ra. Vui lòng thử lại.');
@@ -560,41 +641,41 @@ function validateBooking(data) {
         showError('Vui lòng điền đầy đủ thông tin cá nhân');
         return false;
     }
-    
+
     if (selectedServices.length === 0) {
         showError('Vui lòng chọn ít nhất một dịch vụ');
         return false;
     }
-    
+
     if (!data.appointmentDate || !data.appointmentTime) {
         showError('Vui lòng chọn ngày và giờ hẹn');
         return false;
     }
-    
+
     // Validate date is not in the past
     const selectedDate = new Date(data.appointmentDate);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     if (selectedDate < today) {
         showError('Ngày hẹn không được trong quá khứ');
         return false;
     }
-    
+
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(data.email)) {
         showError('Email không hợp lệ');
         return false;
     }
-    
+
     // Validate phone format (Vietnamese phone)
     const phoneRegex = /^(0|\+84)[0-9]{9}$/;
     if (!phoneRegex.test(data.phone.replace(/\s/g, ''))) {
         showError('Số điện thoại không hợp lệ');
         return false;
     }
-    
+
     return true;
 }
 
@@ -603,7 +684,7 @@ async function submitBooking(bookingData) {
     try {
         // Prepare API payload với nhiều dịch vụ
         const totalAmount = selectedServices.reduce((sum, s) => sum + s.priceValue, 0);
-        
+
         const payload = {
             fullname: bookingData.fullname,
             email: bookingData.email,
@@ -619,7 +700,7 @@ async function submitBooking(bookingData) {
             notes: bookingData.notes,
             finalAmount: totalAmount
         };
-        
+
         const response = await fetch(`${API_BASE}/bookings`, {
             method: 'POST',
             headers: {
@@ -627,20 +708,20 @@ async function submitBooking(bookingData) {
             },
             body: JSON.stringify(payload)
         });
-        
+
         if (!response.ok) {
             const error = await response.json();
             throw new Error(error.message || 'Đặt lịch thất bại');
         }
-        
+
         const result = await response.json();
-        
+
         return {
             success: true,
             booking: result.booking || result,
             message: result.message || 'Đặt lịch thành công'
         };
-        
+
     } catch (error) {
         console.error('API Error:', error);
         return {
@@ -654,12 +735,12 @@ async function submitBooking(bookingData) {
 function showSuccessModal(booking) {
     const modal = document.getElementById('success-modal');
     if (!modal) return;
-    
+
     modal.classList.remove('hidden');
-    
+
     // Add flex display when showing
     modal.classList.add('flex');
-    
+
     const transform = modal.querySelector('.transform');
     if (transform) {
         setTimeout(() => {
@@ -673,13 +754,13 @@ function showSuccessModal(booking) {
 function closeModal() {
     const modal = document.getElementById('success-modal');
     if (!modal) return;
-    
+
     const transform = modal.querySelector('.transform');
     if (transform) {
         transform.classList.remove('scale-100');
         transform.classList.add('scale-95');
     }
-    
+
     setTimeout(() => {
         modal.classList.add('hidden');
         modal.classList.remove('flex');

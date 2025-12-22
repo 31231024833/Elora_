@@ -2,7 +2,7 @@ const API_BASE = window.CONFIG.API_BASE;
 // load header/footer và render thống kê
 fetch("layouts/header.html").then(r => r.text()).then(t => document.querySelector("#header").innerHTML = t);
 fetch("layouts/footer.html").then(r => r.text()).then(t => document.querySelector("#footer").innerHTML = t);
-db = { products: [], categories: [], bookings: [] };
+db = { products: [], categories: [], bookings: [], customers: [] };
 
 document.addEventListener('DOMContentLoaded', async function () {
     await loadData();
@@ -13,8 +13,94 @@ document.addEventListener('DOMContentLoaded', async function () {
     console.log("🚀 ~ db.bookings:", db.bookings)
     renderSalesChart('#sales-chart');
     renderPendingOrders('#orders-list');
-
+    renderPieChart();
 });
+
+function renderPieChart() {
+    const canvas = document.querySelector('#pie-chart');
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    const bookings = db.bookings || [];
+
+    // 1. Gom tổng tiền theo customerId
+    const totalByCustomer = {};
+    console.log("🚀 ~ renderPieChart ~ totalByCustomer:", totalByCustomer)
+
+    bookings.forEach(b => {
+        if (!b.customerId?._id) return;
+
+        const id = b.customerId._id;
+        if (!totalByCustomer[id]) {
+            totalByCustomer[id] = {
+                customer: b.customerId,
+                total: 0
+            };
+        }
+        totalByCustomer[id].total += b.finalAmount || 0;
+    });
+
+    // 2. Sort & lấy top 5
+    const topCustomers = Object.values(totalByCustomer)
+        .sort((a, b) => b.total - a.total)
+        .slice(0, 5);
+    console.log("🚀 ~ renderPieChart ~ topCustomers:", topCustomers)
+
+    if (!topCustomers.length) return;
+
+    const totalSum = topCustomers.reduce((s, c) => s + c.total, 0);
+
+    // 3. Màu đơn giản
+    const colors = [
+        '#4f46e5',
+        '#22c55e',
+        '#f97316',
+        '#ef4444',
+        '#06b6d4'
+    ];
+
+    // 4. Vẽ pie
+    let startAngle = 0;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    topCustomers.forEach((c, index) => {
+        const sliceAngle = (c.total / totalSum) * Math.PI * 2;
+
+        ctx.beginPath();
+        ctx.moveTo(150, 150);
+        ctx.arc(
+            150,
+            150,
+            120,
+            startAngle,
+            startAngle + sliceAngle
+        );
+        ctx.closePath();
+        ctx.fillStyle = colors[index];
+        ctx.fill();
+
+        startAngle += sliceAngle;
+    });
+
+    // 5. Vẽ legend
+    const legendX = 300;
+
+    ctx.font = '12px Arial';
+    topCustomers.forEach((c, index) => {
+        const y = 30 + index * 18;
+
+        ctx.fillStyle = colors[index];
+        ctx.fillRect(legendX, y - 10, 10, 10);
+
+        ctx.fillStyle = '#000';
+        const name = `${c.customer.firstName} ${c.customer.lastName}`;
+        ctx.fillText(
+            `${name}: ${c.total.toLocaleString()}₫`,
+            legendX + 16,
+            y
+        );
+    });
+}
 
 async function loadData() {
     await fetch(`${API_BASE}/products`)
@@ -33,6 +119,11 @@ async function loadData() {
         .then(res => res.json())
         .then(data => {
             db.bookings = data.bookings;
+        });
+    await fetch(`${API_BASE}/customers`)
+        .then(res => res.json())
+        .then(data => {
+            db.customers = data.customers;
         });
 }
 function calcDailySales(bookings, days = 7) {

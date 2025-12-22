@@ -8,6 +8,8 @@ let products = [];
 let categories = [];
 let banners = [];
 let currentUser = null;
+// Search không dấu
+// Pie chart
 
 // Cấu hình đường dẫn API
 import { API_BASE } from './config.js';
@@ -25,6 +27,10 @@ const elements = {
     searchBar: document.querySelector('.search-bar'),
     mobileMenu: document.querySelector('.mobile-menu')
 };
+
+function translate(){
+    
+}
 
 // Khởi tạo ứng dụng khi trang đã tải
 document.addEventListener('DOMContentLoaded', function () {
